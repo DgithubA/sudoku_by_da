@@ -165,7 +165,7 @@ void init() {
     while (1) {
         char user_input[10];
         printf("\nplease select:");
-        printf("\n%s", (!table_made ? "play," : "new game,reset,solve,unsolve,(i,j,number),"));
+        printf("\n%s", (!table_made ? "play," : "new game,reset,solve,unsolve,help me,(i,j,number),"));
         printf("help,quit:");
         fgets(user_input, 10, stdin);
         invalidNumber = 1;
@@ -272,33 +272,39 @@ void init() {
             SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
             printf("\nThis is the help menu. Available commands:\n\n");
             SetConsoleTextAttribute(hConsole, def_wAtt);//default
-            printf("set K (missing digits for make game) with: k=(number between 0 to 81)\n");
+            printf("-set K (missing digits for make game) with: k=(number between 0 to 81) default:%d\n",K);
             if(table_made) {
                 SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("new game:");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("reset: ");
+                printf("-new game:");
                 SetConsoleTextAttribute(hConsole, def_wAtt);//default
-                printf("resets the board\n");
+                printf("change sudoku table.\n");
                 SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("solve: ");
+                printf("-reset: ");
+                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                printf("resets the board.\n");
+                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                printf("-solve: ");
                 SetConsoleTextAttribute(hConsole, def_wAtt);//default
                 printf("solves the entered sudoku problem.\n");
                 SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("unsolve: ");
+                printf("-unsolve: ");
                 SetConsoleTextAttribute(hConsole, def_wAtt);//default
                 printf("unsolves the recently solved sudoku problem.\n");
                 SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("Entering a number, then a comma, then another number, then another comma, then a final number - marks that square with the final number.ex(2,4,6)\n");
+                printf("-help me: ");
+                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                printf("little help to solve,show solved sudoku for 3 second.\n");
+                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                printf("-Entering a number, then a comma, then another number, then another comma, then a final number - marks that square with the final number.ex(2,4,6)\n");
                 SetConsoleTextAttribute(hConsole, def_wAtt);//default
             }else{
                 SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-                printf("play: ");
+                printf("-play: ");
                 SetConsoleTextAttribute(hConsole, def_wAtt);//default
                 printf("make sudoku.\n");
             }
             SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
-            printf("quit: ");
+            printf("-quit: ");
             SetConsoleTextAttribute(hConsole, def_wAtt);//default
             printf("exit the program.\n");
         } else if (!strcmp(user_input, "quit")) {
