@@ -13,7 +13,7 @@
 //#include "sudoku_generator.c"
 #define dif_color 6
 
-#define K 1 //missing digits
+#define K 35 //missing digits
 #define def_wAtt 7
 int def_board[9][9];
 int solved[9][9];
@@ -118,6 +118,11 @@ void do_null(int arr[9][9]){
     }
 }
 
+/**
+ * Sudoku solved or not.
+ * @param arr array of sudoku index.
+ * @return bool return true if resolved otherwise false.
+ */
 bool is_solved(int arr[9][9]){
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
@@ -133,16 +138,15 @@ void init(){
     int i, commandposition, commandpos2, invalidNumber = 1;
     int num1, num2, num3;
     int board[9][9];
-    bool table_made = 0;
+    bool table_made = false;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     int bold_Watt = 15;
     while (1){
-        char user_input[8];
+        char user_input[10];
         printf("\nplease select:");
-        printf("\n%s" ,(!table_made  ? "play," : "reset,solve,unsolve,(i,j,number),"));
+        printf("\n%s" ,(!table_made  ? "play," : "new game,reset,solve,unsolve,(i,j,number),"));
         printf("help,quit:");
-        scanf("%7s",user_input);
-
+        fgets(user_input, 10, stdin);
         invalidNumber = 1;
         num1 = 0;
         num2 = 0;
@@ -159,10 +163,15 @@ void init(){
                 break;
             }
         }
-        for (i = 0; i < strlen(user_input); i++)
+        for (i = 0; i < strlen(user_input)-1; i++)
             user_input[i] = tolower(user_input[i]);
 
-        if(!strcmp(user_input , "play") && !table_made){
+        user_input[strlen(user_input)-1] = NULL;
+
+        if((!strcmp(user_input , "play") && !table_made) || (!strcmp(user_input , "new game") && table_made)){
+            do_null(def_board);
+            do_null(board);
+            do_null(solved);
             fillValues(K);
             table_made = true;
             memcpy(board,def_board,sizeof(board));
@@ -190,7 +199,7 @@ void init(){
                         if(complected(board)){
                             if(is_solved(board)) {
                                 SetConsoleTextAttribute(hConsole, 160);//background:green , text:black.
-                                printf("\namazing u solved sudoku.!!!\n");
+                                printf("\a\namazing u solved sudoku.!!!\n");
                                 SetConsoleTextAttribute(hConsole, def_wAtt);
                                 do_null(def_board);
                                 do_null(board);
@@ -201,6 +210,15 @@ void init(){
                     }else printf("u cant change this.(i=%d,j=%d,number=%d)",num1,num2,def_board[num1 - 1][num2 - 1]);
 
             }
+        }else if(!strcmp(user_input , "help me") && table_made){
+            clearScreen();
+            print_sudoku(solved);
+            for (i = 3; i > 0; i--) {
+                printf("%d\r",i);
+                sleep(1);
+            }
+            clearScreen();
+            print_sudoku(board);
         }else if(!strcmp(user_input , "solve") && table_made){
             clearScreen();
             print_sudoku(solved);
@@ -240,7 +258,7 @@ void init(){
             printf("thanks for ur time ;)");
             sleep(2);
             exit(1);
-        }else printf("choose valid command.\n");
+        }else printf("choose valid command.(%s)\n",user_input);
     }
 }
 
