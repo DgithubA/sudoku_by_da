@@ -7,14 +7,27 @@
 #include <time.h>
 #include <string.h>
 #include <conio.h>
-#include <windows.h>
+
 #include <stdio.h>
 #include <unistd.h>
-//#include "sudoku_generator.c"
-#define dif_color 6
 
-#define K 35 //missing digits
+
+#ifdef _WIN32 //OS is windows
+#include <windows.h>
+#define color 1
+#else
+#define color 0
+#endif
+#define dif_color 6
 #define def_wAtt 7
+#include "w_console.c"
+
+void MySetTextColor(int colorcode) {
+    SetConsoleTextAttribute(hConsole, colorcode);//bold text
+}
+
+#define K 35 //missing digits.
+
 int def_board[9][9];
 int solved[9][9];
 
@@ -22,9 +35,6 @@ int solved[9][9];
 
 
 void print_sudoku(int board[9][9]);
-
-bool have_repeat(int select[9], int num);
-
 
 /**
  * clear console screen.
@@ -112,7 +122,7 @@ bool complected(int board[9][9]) {
 void do_null(int arr[9][9]) {
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
-            arr[i][j] = NULL;
+            arr[i][j] = (int) NULL;
         }
     }
 }
@@ -132,63 +142,61 @@ bool is_solved(int arr[9][9]) {
 }
 
 /**
- * extract numbers from string.
- * @param str string for extract numbers.
- * @return int number was extended on failure return 0.
+ * clean white spaces from start and end of string.
+ * @param str string for trim.
+ * @return char* trimmed string.
  */
-int strtoint(char *str) {
-    char *p = str;
-    int num = 0;
-    while (*p) { // While there are more characters to process...
-        if (isdigit(*p) || ((*p == '-' || *p == '+') && isdigit(*(p + 1)))) {
-            // Found a number
-            long val = strtol(p, &p, 10); // Read number
-            num = val;
-        } else {
-            // Otherwise, move on to the next character.
-            p++;
-        }
-    }
-    return num;
+char *trim(char *str){
+    char *end;
+
+    // Trim leading space
+    while(isspace((unsigned char)*str)) str++;
+
+    if(*str == 0)  // All spaces?
+        return str;
+
+    // Trim trailing space
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    // Write new null terminator character
+    end[1] = '\0';
+
+    return str;
 }
 
 /**
  * init
  */
 void init() {
-    int i, commandposition, commandpos2, invalidNumber = 1;
-    int num1, num2, num3, k = K;
+    int i, j;
+    int nums[3], k = K;
     int board[9][9];
-    bool table_made = false;
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    bool table_made = false, validNumbers = false;
+
+
     int bold_Watt = 15;
     while (1) {
         char user_input[10];
+        validNumbers = false;
         printf("\nplease select:");
         printf("\n%s", (!table_made ? "play," : "new game,reset,solve,unsolve,help me,(i,j,number),"));
         printf("help,quit:");
         fgets(user_input, 10, stdin);
-        invalidNumber = 1;
-        num1 = 0;
-        num2 = 0;
-        num3 = 0;
 
-        for (commandposition = 0; commandposition < strlen(user_input); commandposition++) {
-            if (user_input[commandposition] == ',') {
-                for (commandpos2 = commandposition + 1; commandpos2 < strlen(user_input); commandpos2++) {
-                    if (user_input[commandpos2] == ',') {
-                        invalidNumber = 0;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
         for (i = 0; i < strlen(user_input) - 1; i++)
             user_input[i] = tolower(user_input[i]);
+        strcpy(user_input , trim(user_input));
 
-        user_input[strlen(user_input) - 1] = NULL;
-
+        if (user_input[1] == ',' && user_input[3] == ',') {//6,7,8
+            validNumbers = true;
+            for (int i = 0; i < 5; i += 2) {//i=0,2,4
+                j = (int) (user_input[i] - '0');
+                if (j < 10 && j > 0) {
+                    nums[(i / 2)] = j;
+                } else validNumbers = false;
+            }
+        }
         if ((!strcmp(user_input, "play") && !table_made) || (!strcmp(user_input, "new game") && table_made)) {
             do_null(def_board);
             do_null(board);
@@ -198,13 +206,17 @@ void init() {
             memcpy(board, def_board, sizeof(board));
             clearScreen();
             print_sudoku(board);
-        } else if (user_input[0] == 'k' && user_input[1] == '=' && (strlen(user_input) == 3 ||strlen(user_input) == 4)) {
-            i = strtoint(user_input);
-            if(i<81){
+        } else if (user_input[0] == 'k' && user_input[1] == '=' &&
+                   (strlen(user_input) == 3 || strlen(user_input) == 4)) {
+            //i = strtoint(user_input);
+            i = 0;
+            for (j = 2; j < strlen(user_input); j++)
+                i = 10 * i + (int) (user_input[j] - '0');
+
+            if (i < 81 && i != 0) {
                 k = i;
-                i = 0;
-                if(table_made) {
-                    printf("\nNew setting save. reload...");
+                if (table_made) {
+                    printf("\nNew setting save. reload...(%d)",i);
                     sleep(1);
                     do_null(def_board);
                     do_null(board);
@@ -214,41 +226,25 @@ void init() {
                     memcpy(board, def_board, sizeof(board));
                     clearScreen();
                     print_sudoku(board);
-                }else printf("\nNew setting save.");
-            }else printf("\nk must be less than 81.");
-        } else if (invalidNumber == 0 && table_made) {
-            for (i = 0; i < commandposition; i++)
-                num1 = 10 * num1 + (user_input[i] - '0');
-
-            for (i = commandposition + 1; i < commandpos2; i++)
-                num2 = 10 * num2 + (user_input[i] - '0');
-
-            for (i = commandpos2 + 1; i < strlen(user_input); i++)
-                num3 = 10 * num3 + (user_input[i] - '0');
-
-            if (num1 <= 0 || num2 <= 0 || num3 < 0 || num1 > 9 || num2 > 9 || num3 > 9) {
-                printf("invalid numbers.!");
-            } else {
-
-                if (def_board[num1 - 1][num2 - 1] == 0) {
-                    (board[num1 - 1][num2 - 1]) = num3;
-                    clearScreen();
-                    print_sudoku(board);
-
-                    if (complected(board)) {
-                        if (is_solved(board)) {
-                            SetConsoleTextAttribute(hConsole, 160);//background:green , text:black.
-                            printf("\a\namazing u solved sudoku.!!!\n");
-                            SetConsoleTextAttribute(hConsole, def_wAtt);
-                            do_null(def_board);
-                            do_null(board);
-                            do_null(solved);
-                            table_made = false;
-                        }
+                } else printf("\nNew setting save.(%d)",i);
+            } else printf("\nk must be less than 81.(%d)",i);
+        } else if (validNumbers && table_made) {
+            if (def_board[nums[0] - 1][nums[1] - 1] == 0) {//
+                (board[nums[0] - 1][nums[1] - 1]) = nums[2];
+                clearScreen();
+                print_sudoku(board);
+                if (complected(board)) {
+                    if (is_solved(board)) {
+                        if (color) MySetTextColor(160);//background:green , text:black.
+                        printf("\a\namazing u solved sudoku.!!!\n");
+                        if (color) MySetTextColor(def_wAtt);
+                        do_null(def_board);
+                        do_null(board);
+                        do_null(solved);
+                        table_made = false;
                     }
-                } else printf("u cant change this.(i=%d,j=%d,number=%d)", num1, num2, def_board[num1 - 1][num2 - 1]);
-
-            }
+                }
+            } else printf("u can't change this.(i=%d,j=%d,number=%d)", nums[0], nums[1],def_board[nums[0] - 1][nums[1] - 1]);
         } else if (!strcmp(user_input, "help me") && table_made) {
             clearScreen();
             print_sudoku(solved);
@@ -269,43 +265,43 @@ void init() {
             clearScreen();
             print_sudoku(board);
         } else if (!strcmp(user_input, "help")) {
-            SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+            if (color) MySetTextColor(bold_Watt);//bold text
             printf("\nThis is the help menu. Available commands:\n\n");
-            SetConsoleTextAttribute(hConsole, def_wAtt);//default
-            printf("-set K (missing digits for make game) with: k=(number between 0 to 81) default:%d\n",K);
-            if(table_made) {
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+            if (color) MySetTextColor(def_wAtt);//default
+            printf("-set K (missing digits for make game) with: k=(number between 1 to 81) default:%d.\n", K);
+            if (table_made) {
+                if (color) MySetTextColor(bold_Watt);
                 printf("-new game:");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("change sudoku table.\n");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-reset: ");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("resets the board.\n");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-solve: ");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("solves the entered sudoku problem.\n");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-unsolve: ");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("unsolves the recently solved sudoku problem.\n");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-help me: ");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("little help to solve,show solved sudoku for 3 second.\n");
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-Entering a number, then a comma, then another number, then another comma, then a final number - marks that square with the final number.ex(2,4,6)\n");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
-            }else{
-                SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+                if (color) MySetTextColor(def_wAtt);//default
+            } else {
+                if (color) MySetTextColor(bold_Watt);//bold text
                 printf("-play: ");
-                SetConsoleTextAttribute(hConsole, def_wAtt);//default
+                if (color) MySetTextColor(def_wAtt);//default
                 printf("make sudoku.\n");
             }
-            SetConsoleTextAttribute(hConsole, bold_Watt);//bold text
+            if (color) MySetTextColor(bold_Watt);//bold text
             printf("-quit: ");
-            SetConsoleTextAttribute(hConsole, def_wAtt);//default
+            if (color) MySetTextColor(def_wAtt);//default
             printf("exit the program.\n");
         } else if (!strcmp(user_input, "quit")) {
             printf("thanks for ur time ;)");
@@ -316,9 +312,9 @@ void init() {
 }
 
 
-
 int main() {
     srand(time(0));
+    setupConsole();
     printf("made by D.a\n");
     init();
     return 1;
