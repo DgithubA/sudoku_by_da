@@ -244,7 +244,11 @@ void init() {
                         table_made = false;
                     }
                 }
-            } else printf("u can't change this.(i=%d,j=%d,number=%d)", nums[0], nums[1],def_board[nums[0] - 1][nums[1] - 1]);
+            } else{
+                if (color) MySetTextColor(12);//red color
+                printf("u can't change this.(i=%d,j=%d,number=%d)", nums[0], nums[1],def_board[nums[0] - 1][nums[1] - 1]);
+                if (color) MySetTextColor(def_wAtt);
+            }
         } else if (!strcmp(user_input, "help me") && table_made) {
             clearScreen();
             print_sudoku(solved);
@@ -307,7 +311,11 @@ void init() {
             printf("thanks for ur time ;)");
             sleep(2);
             exit(1);
-        } else printf("choose valid command.(%s)\n", user_input);
+        } else{
+            if (color) MySetTextColor(12);//red color
+            printf("choose valid command.(%s)\n", user_input);
+            if (color) MySetTextColor(def_wAtt);//default
+        }
     }
 }
 
